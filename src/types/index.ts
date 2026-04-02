@@ -5,6 +5,8 @@ export type SkillLevel = "初級" | "中級" | "上級" | "エキスパート";
 export interface Qualification {
   name: string;
   acquiredDate: string;
+  expiryDate?: string;
+  renewalRequired?: boolean;
 }
 
 export interface Training {

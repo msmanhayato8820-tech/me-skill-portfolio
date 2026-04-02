@@ -65,7 +65,7 @@ export const initialEngineers: Engineer[] = [
     company: "MEファシリティマネジメント(株)", department: "ビル管理課", position: "チーフエンジニア",
     joinedYear: 2010, experienceYears: 16,
     qualifications: [
-      { name: "ビル管理士（建築物環境衛生管理技術者）", acquiredDate: "2015-11" },
+      { name: "ビル管理士（建築物環境衛生管理技術者）", acquiredDate: "2015-11", expiryDate: "2026-04-25", renewalRequired: true },
       { name: "第1種電気工事士", acquiredDate: "2013-09" },
       { name: "第2種電気主任技術者", acquiredDate: "2020-11" },
       { name: "エネルギー管理士", acquiredDate: "2022-03" },
@@ -97,7 +97,7 @@ export const initialEngineers: Engineer[] = [
     qualifications: [
       { name: "1級電気工事施工管理技士", acquiredDate: "2014-03" },
       { name: "第1種電気工事士", acquiredDate: "2011-09" },
-      { name: "消防設備士（甲種第4類）", acquiredDate: "2016-06" },
+      { name: "消防設備士（甲種第4類）", acquiredDate: "2016-06", expiryDate: "2026-03-15", renewalRequired: true },
       { name: "1級管工事施工管理技士", acquiredDate: "2019-03" },
     ],
     trainings: [
@@ -127,7 +127,7 @@ export const initialEngineers: Engineer[] = [
     qualifications: [
       { name: "第2種電気工事士", acquiredDate: "2020-12" },
       { name: "第1種電気工事士", acquiredDate: "2022-09" },
-      { name: "第3種電気主任技術者", acquiredDate: "2024-11" },
+      { name: "第3種電気主任技術者", acquiredDate: "2024-11", expiryDate: "2026-04-20", renewalRequired: true },
     ],
     trainings: [
       { name: "IoTセンサー活用研修", completedDate: "2024-09", type: "外部研修" },
@@ -142,7 +142,7 @@ export const initialEngineers: Engineer[] = [
     qualifications: [
       { name: "1級建築施工管理技士", acquiredDate: "2019-03" },
       { name: "ビル管理士（建築物環境衛生管理技術者）", acquiredDate: "2017-11" },
-      { name: "第1種冷凍機械責任者", acquiredDate: "2020-03" },
+      { name: "第1種冷凍機械責任者", acquiredDate: "2020-03", expiryDate: "2026-05-20", renewalRequired: true },
     ],
     trainings: [
       { name: "F&F型リーダーシップ研修", completedDate: "2024-10", type: "F&F型" },
@@ -170,7 +170,7 @@ export const initialEngineers: Engineer[] = [
     joinedYear: 2012, experienceYears: 14,
     qualifications: [
       { name: "第1種電気工事士", acquiredDate: "2014-09" },
-      { name: "エネルギー管理士", acquiredDate: "2018-03" },
+      { name: "エネルギー管理士", acquiredDate: "2018-03", expiryDate: "2026-12-15", renewalRequired: true },
       { name: "1級電気工事施工管理技士", acquiredDate: "2020-03" },
       { name: "第3種電気主任技術者", acquiredDate: "2016-11" },
     ],

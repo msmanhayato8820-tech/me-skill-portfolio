@@ -4,7 +4,20 @@ import { useState } from "react";
 import { Engineer, SkillLevel } from "@/types";
 import { groupCompanies, qualificationList } from "@/data/mock";
 
-type Tab = "search" | "database" | "summary";
+type Tab = "search" | "database" | "summary" | "compliance";
+
+type ExpiryStatus = "expired" | "expiring_30" | "expiring_60" | "valid";
+
+function getExpiryStatus(expiryDate?: string): ExpiryStatus | null {
+  if (!expiryDate) return null;
+  const today = new Date("2026-04-02");
+  const expiry = new Date(expiryDate);
+  const diffDays = Math.floor((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return "expired";
+  if (diffDays <= 30) return "expiring_30";
+  if (diffDays <= 60) return "expiring_60";
+  return "valid";
+}
 
 interface Props {
   engineers: Engineer[];
@@ -17,8 +30,15 @@ export default function AdminDashboard({ engineers, setEngineers }: Props) {
 
   const totalEngineers = groupCompanies.reduce((s, c) => s + c.engineerCount, 0);
 
+  const riskCount = engineers.reduce((count, e) =>
+    count + e.qualifications.filter((q) => {
+      const s = getExpiryStatus(q.expiryDate);
+      return s === "expired" || s === "expiring_30";
+    }).length, 0);
+
   const tabs: { key: Tab; label: string }[] = [
     { key: "summary", label: "サマリー" },
+    { key: "compliance", label: "コンプライアンス" },
     { key: "search", label: "人材検索" },
     { key: "database", label: "人材データベース" },
   ];
@@ -48,6 +68,11 @@ export default function AdminDashboard({ engineers, setEngineers }: Props) {
           <p className="text-xs text-gray-500">エキスパート人材</p>
           <p className="text-2xl font-bold text-purple-600">{engineers.filter((e) => e.skillLevel === "エキスパート").length}</p>
         </div>
+        <div className={`rounded-xl shadow-sm border p-4 text-center ${riskCount > 0 ? "bg-red-50 border-red-200" : "bg-white"}`}>
+          <p className="text-xs text-gray-500">コンプライアンスリスク</p>
+          <p className={`text-2xl font-bold ${riskCount > 0 ? "text-red-600" : "text-green-600"}`}>{riskCount}件</p>
+          {riskCount > 0 && <p className="text-xs text-red-500 mt-1">期限切れ・30日以内</p>}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -66,9 +91,108 @@ export default function AdminDashboard({ engineers, setEngineers }: Props) {
       </div>
 
       {tab === "summary" && <SummaryTab engineers={engineers} />}
+      {tab === "compliance" && <ComplianceTab engineers={engineers} />}
       {tab === "search" && <SearchTab engineers={engineers} onSelect={setSelectedEngineer} />}
       {tab === "database" && !selectedEngineer && <DatabaseTab engineers={engineers} onSelect={setSelectedEngineer} setEngineers={setEngineers} />}
       {selectedEngineer && <EngineerDetail engineer={selectedEngineer} onBack={() => setSelectedEngineer(null)} />}
+    </div>
+  );
+}
+
+/* ───── Compliance Tab ───── */
+function ComplianceTab({ engineers }: { engineers: Engineer[] }) {
+  const statusConfig: Record<ExpiryStatus, { label: string; badge: string; row: string; priority: number }> = {
+    expired:     { label: "期限切れ",  badge: "bg-red-100 text-red-700 border border-red-300",     row: "bg-red-50",    priority: 0 },
+    expiring_30: { label: "30日以内",  badge: "bg-orange-100 text-orange-700 border border-orange-300", row: "bg-orange-50", priority: 1 },
+    expiring_60: { label: "60日以内",  badge: "bg-yellow-100 text-yellow-700 border border-yellow-300", row: "bg-yellow-50",  priority: 2 },
+    valid:       { label: "有効",      badge: "bg-green-100 text-green-700 border border-green-300",  row: "",             priority: 3 },
+  };
+
+  type RiskItem = { engineer: Engineer; qualName: string; expiryDate: string; status: ExpiryStatus; daysLeft: number };
+
+  const riskItems: RiskItem[] = [];
+  engineers.forEach((e) => {
+    e.qualifications.forEach((q) => {
+      const status = getExpiryStatus(q.expiryDate);
+      if (!status || !q.expiryDate) return;
+      const today = new Date("2026-04-02");
+      const expiry = new Date(q.expiryDate);
+      const daysLeft = Math.floor((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      riskItems.push({ engineer: e, qualName: q.name, expiryDate: q.expiryDate, status, daysLeft });
+    });
+  });
+  riskItems.sort((a, b) => statusConfig[a.status].priority - statusConfig[b.status].priority);
+
+  const counts = { expired: 0, expiring_30: 0, expiring_60: 0, valid: 0 };
+  riskItems.forEach((r) => counts[r.status]++);
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+          <p className="text-xs text-gray-500">期限切れ</p>
+          <p className="text-2xl font-bold text-red-600">{counts.expired}</p>
+        </div>
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-center">
+          <p className="text-xs text-gray-500">30日以内</p>
+          <p className="text-2xl font-bold text-orange-600">{counts.expiring_30}</p>
+        </div>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
+          <p className="text-xs text-gray-500">60日以内</p>
+          <p className="text-2xl font-bold text-yellow-600">{counts.expiring_60}</p>
+        </div>
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+          <p className="text-xs text-gray-500">有効</p>
+          <p className="text-2xl font-bold text-green-600">{counts.valid}</p>
+        </div>
+      </div>
+
+      {/* Risk List */}
+      <div className="bg-white rounded-xl shadow-sm border">
+        <div className="p-4 border-b flex items-center justify-between">
+          <h3 className="font-bold text-gray-800">資格有効期限一覧</h3>
+          <span className="text-xs text-gray-400">基準日: 2026-04-02</span>
+        </div>
+        {riskItems.length === 0 ? (
+          <div className="p-8 text-center text-gray-400">有効期限が設定された資格はありません</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium">技術者</th>
+                  <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">所属会社</th>
+                  <th className="text-left px-4 py-3 font-medium">資格名</th>
+                  <th className="text-left px-4 py-3 font-medium">有効期限</th>
+                  <th className="text-left px-4 py-3 font-medium">状態</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {riskItems.map((item, i) => {
+                  const cfg = statusConfig[item.status];
+                  return (
+                    <tr key={i} className={cfg.row}>
+                      <td className="px-4 py-3 font-medium">{item.engineer.name}</td>
+                      <td className="px-4 py-3 text-xs text-gray-500 hidden sm:table-cell">{item.engineer.company}</td>
+                      <td className="px-4 py-3 text-xs">{item.qualName}</td>
+                      <td className="px-4 py-3 text-xs">
+                        {item.expiryDate}
+                        <span className="ml-1 text-gray-400">
+                          {item.daysLeft < 0 ? `(${Math.abs(item.daysLeft)}日超過)` : `(残${item.daysLeft}日)`}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.badge}`}>{cfg.label}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

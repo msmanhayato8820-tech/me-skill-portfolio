@@ -120,15 +120,30 @@ export default function EngineerDashboard({ engineers, setEngineers }: Props) {
             <h3 className="font-bold text-gray-800">保有資格一覧</h3>
           </div>
           <div className="divide-y">
-            {me.qualifications.map((q, i) => (
-              <div key={i} className="px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full shrink-0" />
-                  <span className="text-sm font-medium">{q.name}</span>
+            {me.qualifications.map((q, i) => {
+              const expStatus = q.expiryDate ? (() => {
+                const today = new Date("2026-04-02");
+                const expiry = new Date(q.expiryDate);
+                const diff = Math.floor((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                if (diff < 0) return { label: "期限切れ", cls: "bg-red-100 text-red-700" };
+                if (diff <= 30) return { label: "30日以内", cls: "bg-orange-100 text-orange-700" };
+                if (diff <= 60) return { label: "60日以内", cls: "bg-yellow-100 text-yellow-700" };
+                return { label: "有効", cls: "bg-green-100 text-green-700" };
+              })() : null;
+              return (
+                <div key={i} className={`px-4 py-3 flex items-center justify-between ${expStatus?.label === "期限切れ" ? "bg-red-50" : expStatus?.label === "30日以内" ? "bg-orange-50" : ""}`}>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${expStatus?.label === "期限切れ" ? "bg-red-500" : expStatus?.label === "30日以内" ? "bg-orange-400" : "bg-green-500"}`} />
+                    <span className="text-sm font-medium">{q.name}</span>
+                    {expStatus && <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${expStatus.cls}`}>{expStatus.label}</span>}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-gray-400">{q.acquiredDate}</p>
+                    {q.expiryDate && <p className="text-xs text-gray-400">期限: {q.expiryDate}</p>}
+                  </div>
                 </div>
-                <span className="text-xs text-gray-400">{q.acquiredDate}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
